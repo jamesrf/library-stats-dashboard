@@ -19,6 +19,11 @@
 <div class="container">
     <h1>Gatecount</h1>
     <div class="row">
+    <div id='overall-chart' class='dc-chart'></div>
+
+    <div id='monthly-volume-chart' class='dc-chart'></div>
+    </div>
+    <div class="row">
 
         <div class="col-md-4">
             <div id='month-chart' class='dc-chart'>
@@ -64,11 +69,7 @@
             </div>
         </div>
     </div>
-    <div class="row">
-    <div id='overall-chart' class='dc-chart'></div>
 
-    <div id='monthly-volume-chart' class='dc-chart'></div>
-    </div>
 
 </div>
     <script type="text/javascript">
@@ -148,12 +149,13 @@
         var yearGroup = yearDimension.group();
 
         yearChart
-            .width(300)
+            .width(200)
             .height(150)
             .margins({top: 5, left: 10, right: 10, bottom: 40})
             .group(yearGroup)
             .dimension(yearDimension)
             .elasticX(true)
+            .colors(d3.scale.category10())
 
             .xAxis().ticks(4);
         
@@ -167,6 +169,8 @@
             .width(150)
             .height(100)
             .group(campusGroup)
+            .colors(d3.scale.category10())
+
             .dimension(campusDimension);
 
         var termDimension = ndx.dimension(function(d) {
@@ -187,6 +191,8 @@
             .label(function (d) {
                 return d.data.key.split('.')[1];
             })
+            .colors(d3.scale.category10())
+
             .dimension(termDimension);
 
         var monthGroup = monthDimension.group();
