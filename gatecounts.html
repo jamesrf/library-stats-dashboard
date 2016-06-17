@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dc/1.7.5/dc.css" />
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+<style>
+    </style>
+</head>
+
+<body>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crossfilter/1.3.12/crossfilter.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dc/1.7.5/dc.min.js"></script>
+
+<div class="container">
+    <h1>Gatecount</h1>
+    <div class="row">
+
+        <div class="col-md-4">
+            <div id='month-chart' class='dc-chart'>
+                <strong>Month</strong>
+                <a class='reset'
+                href='javascript:monthChart.filterAll();dc.redrawAll();'
+                >reset</a>
+                <div class="clearfix"></div>
+            </div>
+        </div>    
+
+        <div class="col-md-4">
+            <div id='day-of-week-chart' class='dc-chart'>
+                <strong>Day</strong>
+                <a class='reset'
+                href='javascript:monthChart.filterAll();dc.redrawAll();'
+                >reset</a>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div id='year-chart' class='dc-chart'>
+                <strong>Year</strong>
+                <a class='reset'
+                href='javascript:yearChart.filterAll();dc.redrawAll();'
+                >reset</a>
+                <div class="clearfix"></div>
+            </div>
+            <div id='campus-chart' class='dc-chart'>
+                <strong>Campus</strong>
+                <a class='reset'
+                href='javascript:campusChart.filterAll();dc.redrawAll();'
+                >reset</a>
+                <div class="clearfix"></div>
+            </div>
+                <div id='term-chart' class='dc-chart'>
+                <strong>Term</strong>
+                <a class='reset'
+                href='javascript:termChart.filterAll();dc.redrawAll();'
+                >reset</a>
+                <div class="clearfix"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+    <div id='overall-chart' class='dc-chart'></div>
+
+    <div id='monthly-volume-chart' class='dc-chart'></div>
+    </div>
+
+</div>
+    <script type="text/javascript">
+
+    var dayOfWeekChart = dc.rowChart('#day-of-week-chart');
+    var monthChart = dc.rowChart('#month-chart');    
+    var yearChart = dc.rowChart('#year-chart');
+    var campusChart = dc.pieChart('#campus-chart');
+    var termChart = dc.pieChart('#term-chart');
+
+    var volumeChart = dc.barChart('#monthly-volume-chart');
+    var overallChart = dc.compositeChart('#overall-chart');
+
+
+    var dateFormat = d3.time.format('%Y-%m-%d');
+
+    d3.csv("gatecounts-daily.csv", function(data) {
+        data.forEach(function(d){
+            d.dd = dateFormat.parse(d.datecheck);
+            d.year = d3.time.year(d.dd);
+            d.month = d3.time.month(d.dd);
+        });
+        
+
+        var ndx = crossfilter(data);
+        var all = ndx.groupAll();
+
+        var dayOfWeek = ndx.dimension(function (d) {
+            var day = d.dd.getDay();
+            var name = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            return day + '.' + name[day];
+        });
+        var dayOfWeekGroup = dayOfWeek.group();
+
+        dayOfWeekChart
+            .width(300)
+            .height(200)
+            .margins({top: 5, left: 10, right: 10, bottom: 20})
+            .group(dayOfWeekGroup)
+            .colors(d3.scale.category10())
+
+            .dimension(dayOfWeek)
+            .label(function (d) {
+                return d.key.split('.')[1];
+            }) 
+            .elasticX(true)
+            .xAxis().ticks(4);
+
+        var monthDimension = ndx.dimension(function(d) {
+            var mo = d.dd.getMonth();
+            var name = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+            return mo + '.' + name[mo];
+        });
+        var monthGroup = monthDimension.group();
+ 
+
+        monthChart
+            .width(300)
+            .height(300)
+            .margins({top: 5, left: 10, right: 10, bottom: 40})
+            .group(monthGroup)
+            .dimension(monthDimension)
+            .colors(d3.scale.category20())
+
+            .label(function (d) {
+                return d.key.split('.')[1];
+            })
+            .ordering(function(d){
+                return +d.key.split('.')[0];
+            })
+            .elasticX(true)
+            .xAxis().ticks(4);
+
+        var yearDimension = ndx.dimension(function(d) {
+                    return d3.time.year(d.dd).getFullYear();
+        });
+        var yearGroup = yearDimension.group();
+
+        yearChart
+            .width(300)
+            .height(150)
+            .margins({top: 5, left: 10, right: 10, bottom: 40})
+            .group(yearGroup)
+            .dimension(yearDimension)
+            .elasticX(true)
+
+            .xAxis().ticks(4);
+        
+        
+        var campusDimension = ndx.dimension(function (d){
+            return d.campus;
+        });
+        var campusGroup = campusDimension.group();
+
+        campusChart
+            .width(150)
+            .height(100)
+            .group(campusGroup)
+            .dimension(campusDimension);
+
+        var termDimension = ndx.dimension(function(d) {
+            var mo = d.dd.getMonth();
+            if(mo >= 0 && mo <= 3){
+                return 2 + ".Winter";
+            } else if (mo > 3 && mo <= 7){
+                return 3 + ".Summer";
+            } else {
+                return 1 + ".Fall";
+            }
+        });
+        var termGroup = termDimension.group();
+        termChart
+            .width(150)
+            .height(100)
+            .group(termGroup)
+            .label(function (d) {
+                return d.data.key.split('.')[1];
+            })
+            .dimension(termDimension);
+
+        var monthGroup = monthDimension.group();
+        var dateDimension = ndx.dimension(function(d) {
+            return d.dd;//month;//d.month;
+        });
+        var dateTotalGroup = dateDimension.group().reduceSum(function(d){
+            return d.total;
+        });
+        var campusGroup = function(campus){
+            return dateDimension.group().reduceSum(function(d){
+                return d.campus == campus ? d.total : 0;
+            });
+        };
+        var bwyGroup = campusGroup('BWY')
+
+        volumeChart.width(990) /* dc.barChart('#monthly-volume-chart', 'chartGroup'); */
+            .height(50)
+            .margins({top: 0, right: 50, bottom: 20, left: 50})
+            .dimension(dateDimension)
+            .group(dateTotalGroup)
+            .centerBar(true)
+            .gap(1)
+            .x(d3.time.scale().domain([data[0].dd, data[data.length - 1].dd]))
+            .round(d3.time.day.round)
+            .xUnits(d3.time.days)
+            .yAxis().tickFormat(function (v) {
+                return (v/1000) + 'k';
+            }).ticks(2);
+        
+        overallChart
+            .width(990)
+            .height(200)
+            .margins({top: 0, right: 50, bottom: 20, left: 50})
+            .renderHorizontalGridLines(true)
+            .x(d3.time.scale().domain([data[0].dd, data[data.length - 1].dd]))
+            .brushOn(false)
+            .rangeChart(volumeChart)
+            .elasticY(true)
+            .dimension(dateDimension)
+            .legend(dc.legend().x(800).y(10).itemHeight(13).gap(5))
+            .compose([
+                dc.lineChart(overallChart)
+                    .dimension(dateDimension)
+                    .colors(["#1f77b4"])
+                    .group(campusGroup("DTN"), 'DTN'),
+                dc.lineChart(overallChart)
+                    .dimension(dateDimension)
+                    .colors(["#ff7f0e"])
+                    .group(campusGroup("BWY"), 'BWY'),
+            ])
+
+            ;
+
+        dc.renderAll();
+        dc.redrawAll();
+
+
+    });
+
+
+</script>
+<div id="footer">
+    <a href='javascript:dc.filterAll(); dc.renderAll();'>Reset All</a>
+</div>  
+</body>
+
+</html>
