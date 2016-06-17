@@ -34,7 +34,7 @@
             <div id='day-of-week-chart' class='dc-chart'>
                 <strong>Day</strong>
                 <a class='reset'
-                href='javascript:monthChart.filterAll();dc.redrawAll();'
+                href='javascript:dayOfWeekChart.filterAll();dc.redrawAll();'
                 >reset</a>
                 <div class="clearfix"></div>
             </div>
@@ -196,12 +196,11 @@
         var dateTotalGroup = dateDimension.group().reduceSum(function(d){
             return d.total;
         });
-        var campusGroup = function(campus){
+        var campusGroupFunc = function(campus){
             return dateDimension.group().reduceSum(function(d){
                 return d.campus == campus ? d.total : 0;
             });
         };
-        var bwyGroup = campusGroup('BWY')
 
         volumeChart.width(990) /* dc.barChart('#monthly-volume-chart', 'chartGroup'); */
             .height(50)
@@ -224,6 +223,7 @@
             .renderHorizontalGridLines(true)
             .x(d3.time.scale().domain([data[0].dd, data[data.length - 1].dd]))
             .brushOn(false)
+            .transitionDuration(1000)
             .rangeChart(volumeChart)
             .elasticY(true)
             .dimension(dateDimension)
@@ -232,11 +232,11 @@
                 dc.lineChart(overallChart)
                     .dimension(dateDimension)
                     .colors(["#1f77b4"])
-                    .group(campusGroup("DTN"), 'DTN'),
+                    .group(campusGroupFunc("DTN"), 'DTN'),
                 dc.lineChart(overallChart)
                     .dimension(dateDimension)
                     .colors(["#ff7f0e"])
-                    .group(campusGroup("BWY"), 'BWY'),
+                    .group(campusGroupFunc("BWY"), 'BWY'),
             ])
 
             ;
